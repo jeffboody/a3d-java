@@ -35,6 +35,8 @@ import java.util.concurrent.locks.Condition;
 
 interface A3DRenderer
 {
+	public void CreateContext();
+	public void DestroyContext();
 	public void CreateSurface(SurfaceHolder surface_holder);
 	public void DestroySurface();
 	public void ChangeSurface(int format, int width, int height);
@@ -50,11 +52,11 @@ public class A3DSurfaceView extends SurfaceView implements Runnable, SurfaceHold
 
 	// Render thread state
 	private Thread Render_Thread;
-	boolean Stop_Renderer        = false;   // Has the renderer stopped? (construct a new renderer to draw again)
-	private boolean Running_Flag = false;   // Is the rendering thread paused?
-	private boolean Surface_Flag = false;   // Does the rendering thread have a surface?
-	private Lock      Event_Lock = new ReentrantLock();
-	private Condition Event_Cond = Event_Lock.newCondition();
+	private boolean   Stop_Renderer = false;   // Has the renderer stopped? (construct a new renderer to draw again)
+	private boolean   Running_Flag  = false;   // Is the rendering thread paused?
+	private boolean   Surface_Flag  = false;   // Does the rendering thread have a surface?
+	private Lock      Event_Lock    = new ReentrantLock();
+	private Condition Event_Cond    = Event_Lock.newCondition();
 
 	private class A3DEvent
 	{
@@ -230,6 +232,7 @@ public class A3DSurfaceView extends SurfaceView implements Runnable, SurfaceHold
 
 				if(DequeueEvent(Surface_Created_Event))
 				{
+					Renderer.CreateContext();
 					Renderer.CreateSurface(Surface_Holder);
 					Surface_Flag = true;
 				}
@@ -261,6 +264,7 @@ public class A3DSurfaceView extends SurfaceView implements Runnable, SurfaceHold
 						Renderer.DestroySurface();
 						Surface_Flag = false;
 					}
+					Renderer.DestroyContext();
 					Stop_Renderer = true;
 					needs_signal = true;
 				}

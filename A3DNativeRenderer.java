@@ -57,9 +57,9 @@ public class A3DNativeRenderer implements A3DRenderer
 	// OpenGL ES State
 	private EGL10 egl;
 	private EGLDisplay Gfx_Display;
-	private EGLSurface Gfx_Surface;
+	private EGLSurface Gfx_Surface = EGL10.EGL_NO_SURFACE;
 	private EGLConfig  Gfx_Config;
-	private EGLContext Gfx_Context;
+	private EGLContext Gfx_Context = EGL10.EGL_NO_CONTEXT;
 	private boolean    Gfx_Context_Lost = false;
 	private static int EGL_OPENGL_ES_BIT  = 1;
 	private static int EGL_OPENGL_ES2_BIT = 4;
@@ -77,6 +77,8 @@ public class A3DNativeRenderer implements A3DRenderer
 	private native void NativeChangeSurface(int w, int h);
 	private native void NativeDraw();
 	private native int  NativeClientVersion();
+
+	private boolean Has_Created_Native = false;
 
 	private int CheckEGLError(String s)
 	{
@@ -104,9 +106,12 @@ public class A3DNativeRenderer implements A3DRenderer
 	{
 	}
 
-	public void CreateSurface(SurfaceHolder surface_holder)
+	public void CreateContext()
 	{
-		Surface_Holder = surface_holder;
+		if(Gfx_Context != EGL10.EGL_NO_CONTEXT)
+		{
+			return;
+		}
 
 		int[] version    = new int[2];
 		int[] num_config = new int[1];
@@ -115,31 +120,31 @@ public class A3DNativeRenderer implements A3DRenderer
 
 		egl = (EGL10) EGLContext.getEGL();
 		Gfx_Display = egl.eglGetDisplay(EGL10.EGL_DEFAULT_DISPLAY);
-		CheckEGLError("CreateSurface eglGetDisplay");
+		CheckEGLError("CreateContext eglGetDisplay");
 
 		if(!egl.eglInitialize(Gfx_Display, version))
 		{
-			Log.e(TAG, "CreateSurface - eglInitialize failed");
+			Log.e(TAG, "CreateContext - eglInitialize failed");
 			return;
 		}
-		CheckEGLError("CreateSurface eglInitialize");
+		CheckEGLError("CreateContext eglInitialize");
 		Log.i(TAG, "EGL version is " + version[0] + "." + version[1]);
 
 		// Querry the configurations
 		if(!egl.eglGetConfigs(Gfx_Display, null, 0, num_config))
 		{
-			Log.e(TAG, "CreateSurface - eglGetConfigs could not determine number of configs");
+			Log.e(TAG, "CreateContext - eglGetConfigs could not determine number of configs");
 			return;
 		}
-		CheckEGLError("CreateSurface eglGetConfigs1");
+		CheckEGLError("CreateContext eglGetConfigs1");
 
 		EGLConfig[] configs = new EGLConfig[num_config[0]];
 		if(!egl.eglGetConfigs(Gfx_Display, configs, num_config[0], num_config))
 		{
-			Log.e(TAG, "CreateSurface - eglGetConfigs could not determine number of configs");
+			Log.e(TAG, "CreateContext - eglGetConfigs could not determine number of configs");
 			return;
 		}
-		CheckEGLError("CreateSurface eglGetConfigs2");
+		CheckEGLError("CreateContext eglGetConfigs2");
 
 		Gfx_Config = null;
 
@@ -160,20 +165,20 @@ public class A3DNativeRenderer implements A3DRenderer
 		int selected = -1;
 		for(int i = 0; i < num_config[0]; ++i)
 		{
-			egl.eglGetConfigAttrib(Gfx_Display, configs[i], egl.EGL_COLOR_BUFFER_TYPE, color_buf_type);
-			egl.eglGetConfigAttrib(Gfx_Display, configs[i], egl.EGL_SURFACE_TYPE, surface_type);
-			egl.eglGetConfigAttrib(Gfx_Display, configs[i], egl.EGL_RENDERABLE_TYPE, renderable_type);
-			egl.eglGetConfigAttrib(Gfx_Display, configs[i], egl.EGL_RED_SIZE, red);
-			egl.eglGetConfigAttrib(Gfx_Display, configs[i], egl.EGL_GREEN_SIZE, green);
-			egl.eglGetConfigAttrib(Gfx_Display, configs[i], egl.EGL_BLUE_SIZE, blue);
-			egl.eglGetConfigAttrib(Gfx_Display, configs[i], egl.EGL_ALPHA_SIZE, alpha);
-			egl.eglGetConfigAttrib(Gfx_Display, configs[i], egl.EGL_DEPTH_SIZE, depth);
-			egl.eglGetConfigAttrib(Gfx_Display, configs[i], egl.EGL_STENCIL_SIZE, stencil);
-			egl.eglGetConfigAttrib(Gfx_Display, configs[i], egl.EGL_SAMPLE_BUFFERS, sample_buffers);
-			egl.eglGetConfigAttrib(Gfx_Display, configs[i], egl.EGL_SAMPLES, samples);
-			egl.eglGetConfigAttrib(Gfx_Display, configs[i], egl.EGL_CONFIG_ID, id);
-			egl.eglGetConfigAttrib(Gfx_Display, configs[i], egl.EGL_CONFIG_CAVEAT, caveat);
-			CheckEGLError("CreateSurface eglGetConfigAttrib");
+			egl.eglGetConfigAttrib(Gfx_Display, configs[i], EGL10.EGL_COLOR_BUFFER_TYPE, color_buf_type);
+			egl.eglGetConfigAttrib(Gfx_Display, configs[i], EGL10.EGL_SURFACE_TYPE, surface_type);
+			egl.eglGetConfigAttrib(Gfx_Display, configs[i], EGL10.EGL_RENDERABLE_TYPE, renderable_type);
+			egl.eglGetConfigAttrib(Gfx_Display, configs[i], EGL10.EGL_RED_SIZE, red);
+			egl.eglGetConfigAttrib(Gfx_Display, configs[i], EGL10.EGL_GREEN_SIZE, green);
+			egl.eglGetConfigAttrib(Gfx_Display, configs[i], EGL10.EGL_BLUE_SIZE, blue);
+			egl.eglGetConfigAttrib(Gfx_Display, configs[i], EGL10.EGL_ALPHA_SIZE, alpha);
+			egl.eglGetConfigAttrib(Gfx_Display, configs[i], EGL10.EGL_DEPTH_SIZE, depth);
+			egl.eglGetConfigAttrib(Gfx_Display, configs[i], EGL10.EGL_STENCIL_SIZE, stencil);
+			egl.eglGetConfigAttrib(Gfx_Display, configs[i], EGL10.EGL_SAMPLE_BUFFERS, sample_buffers);
+			egl.eglGetConfigAttrib(Gfx_Display, configs[i], EGL10.EGL_SAMPLES, samples);
+			egl.eglGetConfigAttrib(Gfx_Display, configs[i], EGL10.EGL_CONFIG_ID, id);
+			egl.eglGetConfigAttrib(Gfx_Display, configs[i], EGL10.EGL_CONFIG_CAVEAT, caveat);
+			CheckEGLError("CreateContext eglGetConfigAttrib");
 
 			Log.i(TAG, i + ": id=" + id[0] +
 			               " rgbads=" + red[0] + "," + green[0] + "," + blue[0] + "," + alpha[0] + "," + depth[0] + "," + stencil[0] +
@@ -181,7 +186,7 @@ public class A3DNativeRenderer implements A3DRenderer
 			               " msaa=" + sample_buffers[0] + "," + samples[0]);
 
 			// Manually choose a configuration
-			if((surface_type[0]   &  egl.EGL_WINDOW_BIT) == 0) continue;   // exact
+			if((surface_type[0]   &  EGL10.EGL_WINDOW_BIT) == 0) continue;   // exact
 			if(red[0]            !=  5) continue;   // exact
 			if(green[0]          !=  6) continue;   // exact
 			if(blue[0]           !=  5) continue;   // exact
@@ -209,12 +214,12 @@ public class A3DNativeRenderer implements A3DRenderer
 
 		if(Gfx_Config == null)
 		{
-			Log.e(TAG, "CreateSurface - Could not select desired EGL config in " + num_config[0] + " configs");
+			Log.e(TAG, "CreateContext - Could not select desired EGL config in " + num_config[0] + " configs");
 			return;
 		}
 		else
 		{
-	 		Log.i(TAG, "CreateSurface - Using config " + selected);
+			Log.i(TAG, "CreateContext - Using config " + selected);
 		}
 
 		if(client_version == 1)
@@ -226,16 +231,59 @@ public class A3DNativeRenderer implements A3DRenderer
 			int[] attrib_list = { EGL_CONTEXT_CLIENT_VERSION, 2, EGL10.EGL_NONE };
 			Gfx_Context = egl.eglCreateContext(Gfx_Display, Gfx_Config, EGL10.EGL_NO_CONTEXT, attrib_list);
 		}
-		CheckEGLError("CreateSurface eglCreateContext");
-		if(Gfx_Context == egl.EGL_NO_CONTEXT)
+		CheckEGLError("CreateContext eglCreateContext");
+		if(Gfx_Context == EGL10.EGL_NO_CONTEXT)
 		{
-			Log.e(TAG, "CreateSurface - eglCreateContext failed");
+			Log.e(TAG, "CreateContext - eglCreateContext failed");
 			return;
 		}
 
+		Log.i(TAG, "EGL_VERSION     - " + egl.eglQueryString(Gfx_Display, EGL10.EGL_VERSION));
+		Log.i(TAG, "EGL_EXTENSIONS  - " + egl.eglQueryString(Gfx_Display, EGL10.EGL_EXTENSIONS));
+		// Log.i(TAG, "EGL_CLIENT_APIS - " + egl.eglQueryString(Gfx_Display, EGL10.EGL_CLIENT_APIS));
+	}
+
+	public void DestroyContext()
+	{
+		if(Gfx_Context == EGL10.EGL_NO_CONTEXT)
+		{
+			return;
+		}
+
+		NativeDestroy();
+		Has_Created_Native = false;
+
+		if(!egl.eglMakeCurrent(Gfx_Display, EGL10.EGL_NO_SURFACE, EGL10.EGL_NO_SURFACE, EGL10.EGL_NO_CONTEXT))
+		{
+			Log.e(TAG, "DestroyContext - eglMakeCurrent failed");
+		}
+
+		if(!egl.eglDestroyContext(Gfx_Display, Gfx_Context))
+		{
+			Log.e(TAG, "DestroyContext - eglDestroyContext failed");
+		}
+		Gfx_Context = EGL10.EGL_NO_CONTEXT;
+
+		if(!egl.eglTerminate(Gfx_Display))
+		{
+			Log.e(TAG, "DestroyContext - eglTerminate failed");
+		}
+	}
+
+	public void CreateSurface(SurfaceHolder surface_holder)
+	{
+		if(Gfx_Surface != EGL10.EGL_NO_SURFACE)
+		{
+			return;
+		}
+
+		Surface_Holder = surface_holder;
+
+		egl = (EGL10) EGLContext.getEGL();
+
 		Gfx_Surface = egl.eglCreateWindowSurface(Gfx_Display, Gfx_Config, Surface_Holder, null);
 		CheckEGLError("CreateSurface eglCreateWindowSurface");
-		if(Gfx_Surface == egl.EGL_NO_SURFACE)
+		if(Gfx_Surface == EGL10.EGL_NO_SURFACE)
 		{
 			Log.e(TAG, "CreateSurface - eglCreateWindowSurface failed");
 			return;
@@ -249,36 +297,30 @@ public class A3DNativeRenderer implements A3DRenderer
 		}
 		CheckEGLError("CreateSurface eglMakeCurrent");
 
-		Log.i(TAG, "EGL_VERSION     - " + egl.eglQueryString(Gfx_Display, egl.EGL_VERSION));
-		Log.i(TAG, "EGL_EXTENSIONS  - " + egl.eglQueryString(Gfx_Display, egl.EGL_EXTENSIONS));
-		// Log.i(TAG, "EGL_CLIENT_APIS - " + egl.eglQueryString(Gfx_Display, egl.EGL_CLIENT_APIS));
-
-		NativeCreate();
+		if(Has_Created_Native == false)
+		{
+			NativeCreate();
+			Has_Created_Native = true;
+		}
 	}
 
 	public void DestroySurface()
 	{
-		NativeDestroy();
+		if(Gfx_Surface == EGL10.EGL_NO_SURFACE)
+		{
+			return;
+		}
 
 		if(!egl.eglMakeCurrent(Gfx_Display, EGL10.EGL_NO_SURFACE, EGL10.EGL_NO_SURFACE, EGL10.EGL_NO_CONTEXT))
 		{
 			Log.e(TAG, "DestroySurface - eglMakeCurrent failed");
 		}
 
-		if(!egl.eglDestroyContext(Gfx_Display, Gfx_Context))
-		{
-			Log.e(TAG, "DestroySurface - eglDestroyContext failed");
-		}
-
 		if(!egl.eglDestroySurface(Gfx_Display, Gfx_Surface))
 		{
 			Log.e(TAG, "DestroySurface - eglDestroySurface failed");
 		}
-
-		if(!egl.eglTerminate(Gfx_Display))
-		{
-			Log.e(TAG, "DestroySurface - eglTerminate failed");
-		}
+		Gfx_Surface = EGL10.EGL_NO_SURFACE;
 	}
 
 	public void ChangeSurface(int format, int width, int height)
@@ -296,6 +338,8 @@ public class A3DNativeRenderer implements A3DRenderer
 		{
 			Gfx_Context_Lost = false;
 			DestroySurface();
+			DestroyContext();
+			CreateContext();
 			CreateSurface(Surface_Holder);
 			NativeChangeSurface(Width, Height);
 			if(Gfx_Context_Lost == true) return;
