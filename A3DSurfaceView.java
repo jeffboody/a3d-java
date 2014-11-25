@@ -26,9 +26,11 @@ package com.jeffboody.a3d;
 import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
+import android.view.MotionEvent;
 import android.content.Context;
 import android.util.AttributeSet;
 import android.graphics.PixelFormat;
+import android.os.SystemClock;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.Condition;
@@ -57,6 +59,17 @@ public class A3DSurfaceView extends SurfaceView implements Runnable, SurfaceHold
 	private boolean   Surface_Flag  = false;   // Does the rendering thread have a surface?
 	private Lock      Event_Lock    = new ReentrantLock();
 	private Condition Event_Cond    = Event_Lock.newCondition();
+
+	/*
+	 * Native interface
+	 */
+
+	private native void NativeTouch(int action, int count,
+	                                float x0, float y0,
+	                                float x1, float y1,
+	                                float x2, float y2,
+	                                float x3, float y3,
+	                                double utime);
 
 	private class A3DEvent
 	{
@@ -313,5 +326,77 @@ public class A3DSurfaceView extends SurfaceView implements Runnable, SurfaceHold
 
 		while(HandleEvents())
 			Renderer.Draw();
+	}
+
+	private static double getUtime(double t0)
+	{
+		// convert "uptime" timestamp to UTC/us timestamp
+		double now = (double) System.currentTimeMillis();
+		double t1  = (double) SystemClock.uptimeMillis();
+		return 1000.0*(now + t0 - t1);
+	}
+
+	@Override
+	public boolean onTouchEvent(MotionEvent event)
+	{
+		try
+		{
+			int    action = event.getAction();
+			int    count  = event.getPointerCount();
+			double utime  = getUtime(event.getEventTime());
+			if(count == 1)
+			{
+				NativeTouch(action, count,
+				            event.getX(), event.getY(),
+				            0.0f, 0.0f,
+				            0.0f, 0.0f,
+				            0.0f, 0.0f, utime);
+			}
+			else if(count == 2)
+			{
+				NativeTouch(action, count,
+				            event.getX(event.findPointerIndex(0)),
+				            event.getY(event.findPointerIndex(0)),
+				            event.getX(event.findPointerIndex(1)),
+				            event.getY(event.findPointerIndex(1)),
+				            0.0f, 0.0f,
+				            0.0f, 0.0f, utime);
+			}
+			else if(count == 3)
+			{
+				NativeTouch(action, count,
+				            event.getX(event.findPointerIndex(0)),
+				            event.getY(event.findPointerIndex(0)),
+				            event.getX(event.findPointerIndex(1)),
+				            event.getY(event.findPointerIndex(1)),
+				            event.getX(event.findPointerIndex(2)),
+				            event.getY(event.findPointerIndex(2)),
+				            0.0f, 0.0f, utime);
+			}
+			else if(count >= 4)
+			{
+				NativeTouch(action, count,
+				            event.getX(event.findPointerIndex(0)),
+				            event.getY(event.findPointerIndex(0)),
+				            event.getX(event.findPointerIndex(1)),
+				            event.getY(event.findPointerIndex(1)),
+				            event.getX(event.findPointerIndex(2)),
+				            event.getY(event.findPointerIndex(2)),
+				            event.getX(event.findPointerIndex(3)),
+				            event.getY(event.findPointerIndex(3)),
+				            utime);
+			}
+			else
+			{
+				return false;
+			}
+		}
+		catch(Exception e)
+		{
+			// fail silently
+			return false;
+		}
+
+		return true;
 	}
 }
