@@ -42,6 +42,8 @@ interface A3DRenderer
 	public void CreateSurface(SurfaceHolder surface_holder);
 	public void DestroySurface();
 	public void ChangeSurface(int format, int width, int height);
+	public void Resume();
+	public void Pause();
 	public void Draw();
 }
 
@@ -238,11 +240,6 @@ public class A3DSurfaceView extends SurfaceView implements Runnable, SurfaceHold
 			      Surface_Created_Event.Flag || Surface_Destroyed_Event.Flag || Surface_Changed_Event.Flag ||
 			      !Running_Flag || !Surface_Flag)
 			{
-				if(DequeueEvent(Resume_Event))
-				{
-					Running_Flag = true;
-				}
-
 				if(DequeueEvent(Surface_Created_Event))
 				{
 					Renderer.CreateContext();
@@ -255,8 +252,15 @@ public class A3DSurfaceView extends SurfaceView implements Runnable, SurfaceHold
 					Renderer.ChangeSurface(Surface_Changed_Event.Format, Surface_Changed_Event.Width, Surface_Changed_Event.Height);
 				}
 
+				if(DequeueEvent(Resume_Event))
+				{
+					Renderer.Resume();
+					Running_Flag = true;
+				}
+
 				if(DequeueEvent(Pause_Event))
 				{
+					Renderer.Pause();
 					Running_Flag = false;
 					needs_signal = true;
 				}

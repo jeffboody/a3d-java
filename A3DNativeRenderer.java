@@ -75,6 +75,8 @@ public class A3DNativeRenderer implements A3DRenderer
 	private native void NativeCreate();
 	private native void NativeDestroy();
 	private native void NativeChangeSurface(int w, int h);
+	private native void NativeResume();
+	private native void NativePause();
 	private native void NativeDraw();
 	private native int  NativeClientVersion();
 
@@ -328,6 +330,16 @@ public class A3DNativeRenderer implements A3DRenderer
 		NativeChangeSurface(width, height);
 		Width  = width;
 		Height = height;
+	}
+
+	public void Resume()
+	{
+		NativeResume();
+	}
+
+	public void Pause()
+	{
+		NativePause();
 	}
 
 	public void Draw()
