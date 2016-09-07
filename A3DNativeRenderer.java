@@ -24,7 +24,9 @@
 package com.jeffboody.a3d;
 
 import android.util.Log;
+import android.util.DisplayMetrics;
 import android.view.SurfaceHolder;
+import android.view.WindowManager;
 import android.content.Context;
 import android.content.res.Resources;
 import java.util.List;
@@ -65,8 +67,9 @@ public class A3DNativeRenderer implements A3DRenderer
 	private static int EGL_OPENGL_ES2_BIT = 4;
 	private static int EGL_CONTEXT_CLIENT_VERSION = 0x3098;
 
-	int Width  = 320;
-	int Height = 480;
+	int   Width   = 320;
+	int   Height  = 480;
+	float Density = 1.0F;
 
 	// Reference to the A3DSurfaceView SurfaceHolder
 	private SurfaceHolder Surface_Holder;
@@ -75,6 +78,7 @@ public class A3DNativeRenderer implements A3DRenderer
 	private native void NativeCreate();
 	private native void NativeDestroy();
 	private native void NativeChangeSurface(int w, int h);
+	private native void NativeChangeDensity(float density);
 	private native void NativeResume();
 	private native void NativePause();
 	private native void NativeDraw();
@@ -106,6 +110,11 @@ public class A3DNativeRenderer implements A3DRenderer
 	// Renderer implementation
 	public A3DNativeRenderer(Context context)
 	{
+		DisplayMetrics metrics = new DisplayMetrics();
+		WindowManager  wm      = (WindowManager)
+		                         context.getSystemService(Context.WINDOW_SERVICE);
+		wm.getDefaultDisplay().getMetrics(metrics);
+		Density = metrics.density;
 	}
 
 	public void CreateContext()
@@ -328,6 +337,7 @@ public class A3DNativeRenderer implements A3DRenderer
 	public void ChangeSurface(int format, int width, int height)
 	{
 		NativeChangeSurface(width, height);
+		NativeChangeDensity(Density);
 		Width  = width;
 		Height = height;
 	}
@@ -354,6 +364,7 @@ public class A3DNativeRenderer implements A3DRenderer
 			CreateContext();
 			CreateSurface(Surface_Holder);
 			NativeChangeSurface(Width, Height);
+			NativeChangeDensity(Density);
 			if(Gfx_Context_Lost == true) return;
 			Log.i(TAG, "Draw - Context restored");
 		}
