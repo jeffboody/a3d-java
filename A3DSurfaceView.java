@@ -71,7 +71,7 @@ public class A3DSurfaceView extends SurfaceView implements Runnable, SurfaceHold
 	                                float x1, float y1,
 	                                float x2, float y2,
 	                                float x3, float y3,
-	                                double utime);
+	                                double ts);
 
 	private class A3DEvent
 	{
@@ -332,12 +332,12 @@ public class A3DSurfaceView extends SurfaceView implements Runnable, SurfaceHold
 			Renderer.Draw();
 	}
 
-	private static double getUtime(double t0)
+	private static double getTimestamp(double t0)
 	{
-		// convert "uptime" timestamp to UTC/us timestamp
+		// convert "uptime" timestamp to UTC timestamp
 		double now = (double) System.currentTimeMillis();
 		double t1  = (double) SystemClock.uptimeMillis();
-		return 1000.0*(now + t0 - t1);
+		return (now + t0 - t1)/1000.0;
 	}
 
 	@Override
@@ -347,14 +347,14 @@ public class A3DSurfaceView extends SurfaceView implements Runnable, SurfaceHold
 		{
 			int    action = event.getAction();
 			int    count  = event.getPointerCount();
-			double utime  = getUtime(event.getEventTime());
+			double ts     = getTimestamp(event.getEventTime());
 			if(count == 1)
 			{
 				NativeTouch(action, count,
 				            event.getX(), event.getY(),
 				            0.0f, 0.0f,
 				            0.0f, 0.0f,
-				            0.0f, 0.0f, utime);
+				            0.0f, 0.0f, ts);
 			}
 			else if(count == 2)
 			{
@@ -364,7 +364,7 @@ public class A3DSurfaceView extends SurfaceView implements Runnable, SurfaceHold
 				            event.getX(event.findPointerIndex(1)),
 				            event.getY(event.findPointerIndex(1)),
 				            0.0f, 0.0f,
-				            0.0f, 0.0f, utime);
+				            0.0f, 0.0f, ts);
 			}
 			else if(count == 3)
 			{
@@ -375,7 +375,7 @@ public class A3DSurfaceView extends SurfaceView implements Runnable, SurfaceHold
 				            event.getY(event.findPointerIndex(1)),
 				            event.getX(event.findPointerIndex(2)),
 				            event.getY(event.findPointerIndex(2)),
-				            0.0f, 0.0f, utime);
+				            0.0f, 0.0f, ts);
 			}
 			else if(count >= 4)
 			{
@@ -388,7 +388,7 @@ public class A3DSurfaceView extends SurfaceView implements Runnable, SurfaceHold
 				            event.getY(event.findPointerIndex(2)),
 				            event.getX(event.findPointerIndex(3)),
 				            event.getY(event.findPointerIndex(3)),
-				            utime);
+				            ts);
 			}
 			else
 			{
