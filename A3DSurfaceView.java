@@ -343,11 +343,23 @@ public class A3DSurfaceView extends SurfaceView implements Runnable, SurfaceHold
 	@Override
 	public boolean onTouchEvent(MotionEvent event)
 	{
+		// check for supported actions
+		int action = event.getAction();
+		if((action == MotionEvent.ACTION_DOWN) ||
+		   (action == MotionEvent.ACTION_UP)   ||
+		   (action == MotionEvent.ACTION_MOVE))
+		{
+			// continue
+		}
+		else
+		{
+			return false;
+		}
+
 		try
 		{
-			int    action = event.getAction();
-			int    count  = event.getPointerCount();
-			double ts     = getTimestamp(event.getEventTime());
+			int    count = event.getPointerCount();
+			double ts    = getTimestamp(event.getEventTime());
 			if(count == 1)
 			{
 				NativeTouch(action, count,
