@@ -83,6 +83,11 @@ public class A3DNativeRenderer implements A3DRenderer
 	private native void NativePause();
 	private native void NativeDraw();
 	private native int  NativeClientVersion();
+	private native int  NativeRed();
+	private native int  NativeGreen();
+	private native int  NativeBlue();
+	private native int  NativeAlpha();
+	private native int  NativeDepth();
 
 	private boolean Has_Created_Native = false;
 
@@ -128,6 +133,11 @@ public class A3DNativeRenderer implements A3DRenderer
 		int[] num_config = new int[1];
 
 		int client_version = NativeClientVersion();
+		int r              = NativeRed();
+		int g              = NativeGreen();
+		int b              = NativeBlue();
+		int a              = NativeAlpha();
+		int d              = NativeDepth();
 
 		egl = (EGL10) EGLContext.getEGL();
 		Gfx_Display = egl.eglGetDisplay(EGL10.EGL_DEFAULT_DISPLAY);
@@ -198,14 +208,14 @@ public class A3DNativeRenderer implements A3DRenderer
 
 			// Manually choose a configuration
 			if((surface_type[0]   &  EGL10.EGL_WINDOW_BIT) == 0) continue;   // exact
-			if(red[0]            !=  5) continue;   // exact
-			if(green[0]          !=  6) continue;   // exact
-			if(blue[0]           !=  5) continue;   // exact
-			if(alpha[0]          !=  0) continue;   // exact
-			if(depth[0]          <  16) continue;
-			if(stencil[0]        <   0) continue;
-			if(sample_buffers[0] !=  0) continue;   // exact
-			if(samples[0]        <   0) continue;
+			if(red[0]            != r) continue;   // exact
+			if(green[0]          != g) continue;   // exact
+			if(blue[0]           != b) continue;   // exact
+			if(alpha[0]          != a) continue;   // exact
+			if(depth[0]          <  d) continue;
+			if(stencil[0]        <  0) continue;
+			if(sample_buffers[0] != 0) continue;   // exact
+			if(samples[0]        <  0) continue;
 			if(client_version == 1)
 			{
 				if((renderable_type[0] & EGL_OPENGL_ES_BIT) == 0) continue;   // exact
