@@ -90,7 +90,7 @@ public class A3DResource
 		{
 			Resources r = Ctx.getResources();
 			InputStream      stream1 = r.openRawResource(src);
-			FileOutputStream stream2 = Ctx.openFileOutput(dst, Ctx.MODE_WORLD_WRITEABLE);
+			FileOutputStream stream2 = Ctx.openFileOutput(dst, Ctx.MODE_PRIVATE);
 			byte[] buffer = new byte[4096];   // 4KB buffer
 			int bytes_read;
 			while((bytes_read = stream1.read(buffer, 0, 4096)) != -1)
