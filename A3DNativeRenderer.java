@@ -63,9 +63,11 @@ public class A3DNativeRenderer implements A3DRenderer
 	private EGLConfig  Gfx_Config;
 	private EGLContext Gfx_Context = EGL10.EGL_NO_CONTEXT;
 	private boolean    Gfx_Context_Lost = false;
+	private static int EGL_TRUE           = 1;
 	private static int EGL_OPENGL_ES_BIT  = 1;
 	private static int EGL_OPENGL_ES2_BIT = 4;
-	private static int EGL_CONTEXT_CLIENT_VERSION = 0x3098;
+	private static int EGL_CONTEXT_CLIENT_VERSION      = 0x3098;
+	private static int EGL_CONTEXT_OPENGL_NO_ERROR_KHR = 0x31B3;
 
 	int   Width   = 320;
 	int   Height  = 480;
@@ -142,6 +144,11 @@ public class A3DNativeRenderer implements A3DRenderer
 		egl = (EGL10) EGLContext.getEGL();
 		Gfx_Display = egl.eglGetDisplay(EGL10.EGL_DEFAULT_DISPLAY);
 		CheckEGLError("CreateContext eglGetDisplay");
+
+		String versions   = egl.eglQueryString(Gfx_Display, EGL10.EGL_VERSION);
+		String extensions = egl.eglQueryString(Gfx_Display, EGL10.EGL_EXTENSIONS);
+		Log.i(TAG, "EGL_VERSION     - " + versions);
+		Log.i(TAG, "EGL_EXTENSIONS  - " + extensions);
 
 		if(!egl.eglInitialize(Gfx_Display, version))
 		{
@@ -249,8 +256,30 @@ public class A3DNativeRenderer implements A3DRenderer
 		}
 		else if(client_version == 2)
 		{
-			int[] attrib_list = { EGL_CONTEXT_CLIENT_VERSION, 2, EGL10.EGL_NONE };
-			Gfx_Context = egl.eglCreateContext(Gfx_Display, Gfx_Config, EGL10.EGL_NO_CONTEXT, attrib_list);
+			// check for no_error extension
+			boolean has_no_error = extensions.contains("EGL_KHR_create_context_no_error");
+			if(has_no_error)
+			{
+				Log.i(TAG, "EGL_CONTEXT_OPENGL_NO_ERROR_KHR=TRUE");
+				int[] attrib_list =
+				{
+					EGL_CONTEXT_CLIENT_VERSION, 2,
+					EGL_CONTEXT_OPENGL_NO_ERROR_KHR, EGL_TRUE,
+					EGL10.EGL_NONE
+				};
+
+				Gfx_Context = egl.eglCreateContext(Gfx_Display, Gfx_Config, EGL10.EGL_NO_CONTEXT, attrib_list);
+			}
+			else
+			{
+				int[] attrib_list =
+				{
+					EGL_CONTEXT_CLIENT_VERSION, 2,
+					EGL10.EGL_NONE
+				};
+
+				Gfx_Context = egl.eglCreateContext(Gfx_Display, Gfx_Config, EGL10.EGL_NO_CONTEXT, attrib_list);
+			}
 		}
 		CheckEGLError("CreateContext eglCreateContext");
 		if(Gfx_Context == EGL10.EGL_NO_CONTEXT)
@@ -258,10 +287,6 @@ public class A3DNativeRenderer implements A3DRenderer
 			Log.e(TAG, "CreateContext - eglCreateContext failed");
 			return;
 		}
-
-		Log.i(TAG, "EGL_VERSION     - " + egl.eglQueryString(Gfx_Display, EGL10.EGL_VERSION));
-		Log.i(TAG, "EGL_EXTENSIONS  - " + egl.eglQueryString(Gfx_Display, EGL10.EGL_EXTENSIONS));
-		// Log.i(TAG, "EGL_CLIENT_APIS - " + egl.eglQueryString(Gfx_Display, EGL10.EGL_CLIENT_APIS));
 	}
 
 	public void DestroyContext()
