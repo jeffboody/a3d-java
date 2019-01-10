@@ -66,6 +66,7 @@ public class A3DNativeRenderer implements A3DRenderer
 	private static int EGL_TRUE           = 1;
 	private static int EGL_OPENGL_ES_BIT  = 1;
 	private static int EGL_OPENGL_ES2_BIT = 4;
+	private static int EGL_OPENGL_ES3_BIT = 64;   // 0x40
 	private static int EGL_CONTEXT_CLIENT_VERSION      = 0x3098;
 	private static int EGL_CONTEXT_OPENGL_NO_ERROR_KHR = 0x31B3;
 
@@ -231,6 +232,10 @@ public class A3DNativeRenderer implements A3DRenderer
 			{
 				if((renderable_type[0] & EGL_OPENGL_ES2_BIT) == 0) continue;   // exact
 			}
+			else if(client_version == 3)
+			{
+				if((renderable_type[0] & EGL_OPENGL_ES3_BIT) == 0) continue;   // exact
+			}
 
 			// Just take the first accepted config (for now ...)
 			if(selected < 0)
@@ -254,7 +259,7 @@ public class A3DNativeRenderer implements A3DRenderer
 		{
 			Gfx_Context = egl.eglCreateContext(Gfx_Display, Gfx_Config, EGL10.EGL_NO_CONTEXT, null);
 		}
-		else if(client_version == 2)
+		else if((client_version == 2) || (client_version == 3))
 		{
 			// check for no_error extension
 			boolean has_no_error = extensions.contains("EGL_KHR_create_context_no_error");
@@ -263,7 +268,7 @@ public class A3DNativeRenderer implements A3DRenderer
 				Log.i(TAG, "EGL_CONTEXT_OPENGL_NO_ERROR_KHR=TRUE");
 				int[] attrib_list =
 				{
-					EGL_CONTEXT_CLIENT_VERSION, 2,
+					EGL_CONTEXT_CLIENT_VERSION, client_version,
 					EGL_CONTEXT_OPENGL_NO_ERROR_KHR, EGL_TRUE,
 					EGL10.EGL_NONE
 				};
@@ -274,7 +279,7 @@ public class A3DNativeRenderer implements A3DRenderer
 			{
 				int[] attrib_list =
 				{
-					EGL_CONTEXT_CLIENT_VERSION, 2,
+					EGL_CONTEXT_CLIENT_VERSION, client_version,
 					EGL10.EGL_NONE
 				};
 
